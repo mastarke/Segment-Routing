@@ -1,0 +1,1049 @@
+testbed:
+    name: noname
+    servers:
+        tftp:
+            address: 223.255.254.245
+            custom:
+                rootdir: /auto/tftpboot/mastarke
+            server: sj20lab-tftp4
+devices:
+    R1:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.20
+                port: 2012
+                protocol: telnet
+        custom:
+            chassis_type: asr9k
+            hostname: R1
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.58.163
+    R2:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.58
+                port: 2013
+                protocol: telnet
+        custom:
+            chassis_type: asr9k
+            hostname: R2
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.58.155
+    R3:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.58
+                port: 2015
+                protocol: telnet
+            calvados:
+                protocol: telnet
+                ip: "172.27.151.58"
+                port: 2004
+        custom:
+            chassis_type: asr9k
+            console_a: telnet 172.27.151.58 2015
+            console_b: telnet 172.27.151.58 2004
+            hostname: R3
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.58.164
+        tacacs:
+            login_prompt: "Username:"
+            password_prompt: "Password:"
+            username: "root"
+        passwords:
+            tacacs: root
+            enable: root
+            line: root
+    R4:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.183
+                port: 2033
+                protocol: telnet
+        custom:
+            chassis_type: asr9k
+            hostname: R4
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.58.157
+    R5:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.58
+                port: 2014
+                protocol: telnet
+        custom:
+            chassis_type: asr9k
+            hostname: R5
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.53.27
+    R6:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.15
+                port: 2016
+                protocol: telnet
+            b:
+                ip: 172.27.151.55
+                port: 2016
+                protocol: telnet
+            calvados:
+                protocol: telnet
+                ip: "172.27.151.15"
+                port: 2012
+            vty_a:
+                protocol : telnet
+                ip : "1.83.53.27"
+        custom:
+            chassis_type: asr9k
+            console_a: telnet 172.27.151.15 2016
+            #console_b: telnet 172.27.151.55 2016
+            hostname: R6
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.53.27
+        tacacs:
+            login_prompt: "Username:"
+            password_prompt: "Password:"
+            username: "root"
+        passwords:
+            tacacs: root
+            enable: root
+            line: root
+    R7:
+        type: 'asr9k-x64'
+        connections:
+            a:
+                ip: 172.27.151.55
+                port: 2004
+                protocol: telnet
+        custom:
+            chassis_type: asr9k
+            hostname: R7
+            mgt_intf: MgmtEth0/RSP0/CPU0/0
+            mgt_ip: 1.83.53.27
+    ixia:
+        type: ixia
+        connections:
+            ixia:
+                protocol: ixia
+                ip: 172.27.152.13
+                tcl_server: 172.27.211.87:8009
+                username: ciscoUser
+topology:
+    R1:
+        interfaces:
+            # rtr1_rtr2 interface connections
+            tenGigE0/0/1/1:
+                alias: rtr1_rtr2_intf.1
+                speed: ether10000
+                peer:
+                - R2::tenGigE0/0/0/23
+                type: unkown
+            tenGigE0/0/2/1:
+                alias: rtr1_rtr2_intf.2
+                speed: ether10000
+                peer:
+                - R2::tenGigE0/0/0/22
+                type: unkown
+            tenGigE0/0/0/1:
+                alias: rtr1_rtr2_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tenGigE0/0/0/14
+                type: unkown
+            # rtr1_rtr3 interface connections
+            tenGigE0/0/0/2:
+                alias: rtr1_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/25
+                type: unkown
+            tenGigE0/0/0/3:
+                alias: rtr1_rtr3_intf.2
+                speed: ether10000
+                peer:
+                - R3::tengigE0/2/0/26
+                type: unkown
+            # rtr1_rtr4 interface connections
+            tenGigE0/0/1/2:
+                alias: rtr1_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/8
+                type: unkown
+            tenGigE0/0/2/1:
+                alias: rtr1_rtr4_intf.2
+                speed: ether10000
+                peer:
+                - R4::tenGigE0/2/0/9
+                type: unkown
+            # rtr1_rtr5 interface connections
+            tenGigE0/0/2/2:
+                alias: rtr1_rtr5_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/0/2
+                type: unkown
+            tenGigE0/0/2/3:
+                alias: rtr1_rtr5_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/0/3
+                type: unkown
+            # rtr1_tgen1 interface connections
+            tenGigE0/0/1/3:
+                alias: rtr1_tgen1.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::7/4
+                type: unkown
+    R2:
+        interfaces:
+            # rtr2_rtr1 interfaces connections
+            tenGigE0/0/0/23:
+                alias: rtr2_rtr1_intf.1
+                speed: ether10000
+                peer:
+                - R1::tenGigE0/0/1/1
+                type: unkown
+            tenGigE0/0/0/22:
+                alias: rtr2_rtr1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/2/1
+                type: unkown
+            tenGigE0/0/0/14:
+                alias: rtr2_rtr1_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/0/1
+                type: unkown
+            # rtr2_rtr3 interface connections
+            ########################################
+            # R2 to R3 typhoon to typhoon connections
+            ########################################
+            tengigE0/0/0/2:
+                alias: rtr2_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/0
+                type: unkown
+            tengigE0/0/0/3:
+                alias: rtr2_rtr3_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/1
+                type: unkown
+            tengigE0/0/0/4:
+                alias: rtr2_rtr3_intf.3
+                speed: ether10000
+                peer:
+                - R3::tengigE0/2/0/2
+                type: unkown
+            tengigE0/0/0/5:
+                alias: rtr2_rtr3_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/3
+                type: unkown
+            ###################################
+            # R2 to R3 typoon to tomahawk
+            ###################################
+            # tengigE0/0/0/12:
+            #     alias: rtr2_rtr3_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/1/0/4/4
+            #     type: unkown
+            # tengigE0/0/0/13:
+            #     alias: rtr2_rtr3_intf.2
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/1/0/4/5
+            #     type: unkown
+            # tengigE0/0/0/17:
+            #     alias: rtr2_rtr3_intf.3
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/1/0/4/6
+            #     type: unkown
+            # rtr2_rtr4 interface connections
+            tengigE0/0/0/15:
+                alias: rtr2_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/3
+                type: unkown
+            tengigE0/0/0/16:
+                alias: rtr2_rtr4_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/4
+                type: unkown
+            # rtr2_rtr6 interfaces connections
+            tengigE0/3/1/4:
+                alias: rtr2_rtr6_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/5
+                type: unkown
+            tengigE0/3/1/5:
+                alias: rtr2_rtr6_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/6
+                type: unkown
+            tengigE0/3/1/6:
+                alias: rtr2_rtr6_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/6
+                type: unkown
+            ##################################
+            # R2 TO R7 10G interfaces
+            ##################################
+            tenGigE0/0/0/1:
+                alias: rtr2_rtr7_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R7::tenGigE0/0/0/2
+                type: unkown
+            # rtr2_tgen1 interfaces connections
+            tenGigE0/0/0/0:
+                alias: rtr2_tgen1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::7/1
+                type: unkown
+    R3:
+        interfaces:
+            # rtr3_rtr1 interface connections
+            tengigE0/2/0/25:
+                alias: rtr3_rtr1_intf.1
+                speed: ether10000
+                peer:
+                - R1::tenGigE0/0/0/2
+                type: unkown
+            tengigE0/2/0/26:
+                alias: rtr3_rtr1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/0/3
+                type: unkown
+            # RTR3_TO_RTR2 INTERFACE CONNECTIONS
+            ####################################
+            # R3 to R2 typhoon to typhoon connections
+            ####################################
+            tengigE0/2/0/0:
+                alias: rtr3_rtr2_intf.1
+                speed: ether10000
+                peer:
+                - R2::tengigE0/0/0/2
+                type: unkown
+            tengigE0/2/0/1:
+                alias: rtr3_rtr2_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/3
+                type: unkown
+            tengigE0/2/0/2:
+                alias: rtr3_rtr2_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/4
+                type: unkown
+            tengigE0/2/0/3:
+                alias: rtr3_rtr2_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/5
+                type: unkown
+            tengigE0/2/0/4:
+                alias: rtr3_rtr2_intf.5
+                speed: ether10000
+                peer:
+                - R2::tengigE0/0/0/6
+                type: unkown
+            ####################################
+            # R3 to R2 tomahawk to typhoon connections
+            ####################################
+            # tengigE0/1/0/4/4:
+            #     alias: rtr3_rtr2_intf.1
+            #     speed: ether10000
+            #     peer:
+            #     - R2::tengigE0/0/0/12
+            #     type: unkown
+            # tengigE0/1/0/4/5:
+            #     alias: rtr3_rtr2_intf.2
+            #     speed: ether10000
+            #     peer:
+            #     - R2::tengigE0/0/0/13
+            #     type: unkown
+            # tengigE0/1/0/4/6:
+            #     alias: rtr3_rtr2_intf.3
+            #     speed: ether10000
+            #     peer:
+            #     - R2::tengigE0/0/0/17
+            #     type: unkown
+            # rtr3_rtr4 interface connections
+            #################################
+            # typhoon to typhoon connections to R4
+            #################################
+            # tengigE0/2/0/8:
+            #     alias: rtr3_rtr4_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R4::tenGigE0/2/0/0
+            #     type: unkown
+            # tengigE0/2/0/9:
+            #     alias: rtr3_rtr4_intf.2
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R4::tenGigE0/2/0/1
+            #     type: unkown
+            # tengigE0/2/0/10:
+            #     alias: rtr3_rtr4_intf.3
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R4::tenGigE0/2/0/2
+            #     type: unkown
+            #################################
+            # tomahawk to typhoon connections to R4
+            #################################
+            tengigE0/1/0/4/1:
+                alias: rtr3_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/13
+                type: unkown
+            tengigE0/1/0/4/2:
+                alias: rtr3_rtr4_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/14
+                type: unkown
+            tengigE0/1/0/4/3:
+                alias: rtr3_rtr4_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/15
+                type: unkown
+            # rtr3_rtr5 interface connections
+            tengigE0/2/0/20:
+                alias: rtr3_rtr5_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/2/0/3
+                type: unkown
+            tengigE0/2/0/21:
+                alias: rtr3_rtr5_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/2/0/1
+                type: unkown
+            #########################################
+            # RTR3_RTR6 100G OCTAINE 8X100 CONNECTION
+            #########################################
+            HundredGigE0/1/0/5:
+                alias: rtr3_rtr6_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::HundredGigE0/0/0/5
+                type: unkown
+            HundredGigE0/1/0/6:
+                alias: rtr3_rtr6_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::HundredGigE0/0/0/6
+                type: unkown
+            #########################################
+            # RTR3_RTR6 10G SURE SHOT MOD-400 CONNECTIONS
+            #########################################
+            tengigE0/0/1/4:
+                alias: rtr3_rtr6_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/0
+                type: unkown
+            tengigE0/0/1/5:
+                alias: rtr3_rtr6_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/1
+                type: unkown
+            tengigE0/0/1/0:
+                alias: rtr3_rtr6_intf.5
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/0
+                type: unkown
+            tengigE0/0/1/1:
+                alias: rtr3_rtr6_intf.6
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/1
+                type: unkown
+            tengigE0/0/1/2:
+                alias: rtr3_rtr6_intf.7
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/2
+                type: unkown
+            tengigE0/0/1/2:
+                alias: rtr3_rtr6_intf.8
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/3
+                type: unkown
+            ####################################
+            # RTR3_TGEN1(IXIA) TYPHOON 10G CONNECTIONS
+            ####################################
+            tengigE0/2/0/35:
+                alias: rtr3_tgen1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::7/3
+                type: unkown
+            #######################################
+            # RTR3_TGEN1(IXIA) OCTAINE 8X100G 10G CONNECTIONS
+            #######################################
+            # tengigE0/1/0/4/0:
+            #     alias: rtr3_tgen1_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - ixia::7/5
+            #     type: unkown
+            ##########################################
+            #RTR3_TGEN1(IXIA) SURE SHOT MOD-400 10G CONNECTIONS
+            #########################################
+            # tengigE0/0/1/19:
+            #     alias: rtr3_tgen1_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - ixia::7/5
+            #     type: unkown
+    R4:
+        interfaces:
+            #rtr4_rtr1 interface connections
+            tenGigE0/2/0/8:
+                alias: rtr4_rtr1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/2/0
+                type: unkown
+            tenGigE0/2/0/9:
+                alias: rtr4_rtr1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/1/2
+                type: unkown
+            #rtr4_rtr2 interface connections
+            tenGigE0/2/0/3:
+                alias: rtr4_rtr2_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/15
+                type: unkown
+            tenGigE0/2/0/4:
+                alias: rtr4_rtr2_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/16
+                type: unkown
+            #rtr4_rtr3 interface connections
+            # tenGigE0/2/0/0:
+            #     alias: rtr4_rtr3_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/2/0/8
+            #     type: unkown
+            # tenGigE0/2/0/1:
+            #     alias: rtr4_rtr3_intf.2
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/2/0/9
+            #     type: unkown
+            # tenGigE0/2/0/2:
+            #     alias: rtr4_rtr3_intf.3
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/2/0/10
+            #     type: unkown
+            ########################
+            # typhoon to tomahawk connections to R3
+            ########################
+            tenGigE0/2/0/13:
+                alias: rtr4_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/1/0/4/1
+                type: unkown
+            tenGigE0/2/0/14:
+                alias: rtr4_rtr3_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/1/0/4/2
+                type: unkown
+            tenGigE0/2/0/15:
+                alias: rtr4_rtr3_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/1/0/4/3
+                type: unkown
+            #rtr4_rtr5 interface connections
+            tenGigE0/2/0/5:
+                alias: rtr4_rtr5_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/1/0
+                type: unkown
+            tenGigE0/2/0/6:
+                alias: rtr4_rtr5_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/0/0
+                type: unkown
+            tenGigE0/2/0/7:
+                alias: rtr4_rtr5_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/0/1
+                type: unkown
+            ##################################
+            # RTR4_RTR6 CONNECTIONS
+            ##################################
+            tenGigE0/2/0/10:
+                alias: rtr4_rtr6_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/2
+                type: unkown
+            tenGigE0/2/0/11:
+                alias: rtr4_rtr6_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/3
+                type: unkown
+            tenGigE0/2/0/12:
+                alias: rtr4_rtr6_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/4
+                type: unkown
+            tenGigE0/2/0/16:
+                alias: rtr4_rtr6_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/0/8
+                type: unkown
+            tenGigE0/2/0/17:
+                alias: rtr4_rtr6_intf.5
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/4
+                type: unkown
+            tenGigE0/2/0/18:
+                alias: rtr4_rtr6_intf.6
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/1/0/5
+                type: unkown
+            #############################
+            # R4 TO R7 10G CONNECTIONS
+            #############################
+            tenGigE0/2/0/19:
+                alias: rtr4_rtr7_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/3
+                type: unkown
+            #############################
+            #RTR4_TGEN1 CONNECTIONS
+            #############################
+            tenGigE0/2/0/23:
+                alias: rtr4_tgen1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::7/2
+                type: unkown
+    R5:
+        interfaces:
+            # rtr5_rtr1 interface connections
+            tenGigE0/0/0/2:
+                alias: rtr5_rtr1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/2/2
+                type: unkown
+            tenGigE0/0/0/3:
+                alias: rtr5_rtr1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/2/3
+                type: unkown
+            # rtr5_rtr3 interface connections
+            tenGigE0/2/0/3:
+                alias: rtr5_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/20
+                type: unkown
+            tenGigE0/2/0/1:
+                alias: rtr5_rtr3_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/2/0/21
+                type: unkown
+            # rtr5_rtr4 interface connections
+            tenGigE0/0/1/0:
+                alias: rtr5_rtr1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/5
+                type: unkown
+            tenGigE0/0/0/0:
+                alias: rtr5_rtr1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/6
+                type: unkown
+            tenGigE0/0/0/1:
+                alias: rtr5_rtr1_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/7
+                type: unkown
+            tenGigE0/0/1/1:
+                alias: rtr5_tgen1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::2/4
+                type: unkown
+    R6:
+        interfaces:
+            # rtr6_rtr2 interface connections
+            tenGigE0/0/0/0/5:
+                alias: rtr6_rtr2_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/3/1/4
+                type: unkown
+            tenGigE0/0/0/0/6:
+                alias: rtr6_rtr2_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/3/1/5
+                type: unkown
+            tenGigE0/0/0/0/7:
+                alias: rtr6_rtr2_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/3/1/6
+                type: unkown
+            ###################################
+            #RTR6_RTR3 100G OCTAINE CONNECTIONS 8X100G
+            ###################################
+            HundredGigE0/0/0/5:
+                alias: rtr6_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::HundredGigE 0/1/0/5
+                type: unkown
+            HundredGigE0/0/0/6:
+                alias: rtr6_rtr3_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::HundredGigE 0/1/0/6
+                type: unkown
+            ###################################
+            #RTR6_RTR3 10G OCTAINE 8X100G 10G CONNECTIONS
+            ###################################
+            tenGigE0/0/0/0/0:
+                alias: rtr6_rtr3_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/0/1/4
+                type: unkown
+            tenGigE0/0/0/0/1:
+                alias: rtr6_rtr3_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/0/1/5
+                type: unkown
+            ###################################
+            #RTR6_RTR3 10G SURE SHOT MOD-400
+            ###################################
+            # tenGigE0/1/0/0:
+            #     alias: rtr6_rtr3_intf.3
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/0/1/0
+            #     type: unkown
+            # tenGigE0/1/0/1:
+            #     alias: rtr6_rtr3_intf.4
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/0/1/1
+            #     type: unkown
+            # tenGigE0/1/0/2:
+            #     alias: rtr6_rtr3_intf.5
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/0/1/2
+            #     type: unkown
+            # tenGigE0/1/0/3:
+            #     alias: rtr6_rtr3_intf.6
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/0/1/3
+            #     type: unkown
+            ##########################################
+            # RTR6_RTR4 OCTAINE 8X100 10G CONNECTIONS
+            ##########################################
+            tenGigE0/0/0/0/2:
+                alias: rtr6_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/10
+                type: unkown
+            tenGigE0/0/0/0/3:
+                alias: rtr6_rtr4_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/11
+                type: unkown
+            tenGigE0/0/0/0/4:
+                alias: rtr6_rtr4_intf.3
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/12
+                type: unkown
+            tenGigE0/0/0/0/8:
+                alias: rtr6_rtr4_intf.4
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/16
+                type: unkown
+            ##########################################
+            # RTR6_RTR4 SURE SHOT MOD-400 10G CONNECTIONS
+            ##########################################
+            tenGigE0/1/0/4:
+                alias: rtr6_rtr4_intf.5
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/17
+                type: unkown
+            tenGigE0/1/0/5:
+                alias: rtr6_rtr4_intf.6
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/18
+                type: unkown
+            ##########################################
+            # RTR6_TGEN1 (IXIA) OCTAINE 8X100G 10G CONNECTIONS
+            ##########################################
+            tenGigE0/0/0/1/0:
+                alias: rtr6_tgen1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::2/2
+                type: unkown
+            ##########################################
+            # RTR6_TGEN1 (IXIA) OCTAINE 8X100G 10G CONNECTIONS
+            ##########################################
+            tenGigE0/1/0/19:
+                alias: rtr6_tgen1_intf.2
+                speed: ether10000
+                link_type: physical
+                peer:
+                - ixia::2/2
+                type: unkown
+    R7:
+        interfaces:
+            #####################################
+            # R7 TO R2 10G CONNECTIONS
+            #####################################
+            tenGigE0/0/0/2:
+                alias: rtr7_rtr2_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tengigE0/0/0/1
+                type: unkown
+            #####################################
+            # R7 TO R3 10G CONNECTIONS
+            #####################################
+            tenGigE0/0/0/1:
+                alias: rtr7_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tengigE0/0/0/18
+                type: unkown
+            ####################################
+            # R7 TO R4 10G CONNECTIONS
+            #####################################
+            tenGigE0/0/0/3:
+                alias: rtr7_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/2/0/19
+                type: unkown
+            ####################################
+            # R7 TO R6 10G CONNECTIONS
+            #####################################
+            tenGigE0/0/0/0:
+                alias: rtr7_rtr6_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tengigE0/1/0/18
+                type: unkown
+    ixia:
+        interfaces:
+            7/4:
+                alias: tgen1_rtr1_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R1::tenGigE0/0/1/3
+                type: unkown
+            7/1:
+                alias: tgen1_rtr2_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R2::tenGigE0/0/0/0
+                type: unkown
+            7/3:
+                alias: tgen1_rtr3_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R3::tenGigE0/2/0/35
+                type: unkown
+            # 7/5:
+            #     alias: tgen1_rtr3_intf.1
+            #     speed: ether10000
+            #     link_type: physical
+            #     peer:
+            #     - R3::tengigE0/1/0/4/0
+            #     type: unkown
+            7/2:
+                alias: tgen1_rtr4_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R4::tenGigE0/2/0/23
+                type: unkown
+            2/4:
+                alias: tgen1_rtr5_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R5::tenGigE0/0/1/1
+                type: unkown
+            2/2:
+                alias: tgen1_rtr6_intf.1
+                speed: ether10000
+                link_type: physical
+                peer:
+                - R6::tenGigE0/0/0/1/0
+                type: unkown
