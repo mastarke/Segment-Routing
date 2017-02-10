@@ -6,7 +6,7 @@ import os
 class SrScriptArgs(object):
     """ Segment routing script aruguments."""
 
-    testbed_file = '/nobackup/mastarke/my_local_git/segment_routing/sr-vpls.yaml'
+    testbed_file = '/ws/mastarke-sjc/my_local_git/segment_routing/sr-vpls.yaml'
     uut_list = ['R6', 'R4', 'R7', 'R2', 'R3']
 
     # INTERFACE ARGUMENTS TO SELECT LINKS IN COMMON SETUP
@@ -90,7 +90,7 @@ class SrScriptArgs(object):
 
 def main():
     """Segment routing script run"""
-    run(testscript='/nobackup/mastarke/my_local_git/segment_routing/sr.py',
+    run(testscript='/ws/mastarke-sjc/my_local_git/segment_routing/sr.py',
     uids=Or('common_setup',
             And('SanityTraffic'),
             And('SrLoopback'),
@@ -105,6 +105,7 @@ def main():
             And('Interface_flap_bundle'),
             And('Interface_flap_bundle_members'),
             And('Bundle_add_remove_members'),
+            And('Sr_Ecmp'),
             Not('.*'),
             'common_cleanup')
         )

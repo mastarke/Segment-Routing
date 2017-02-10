@@ -76,14 +76,14 @@ argument is used to tell where to start grabbing interfaces from.
         16. Verify VPLS traffic forwarding over physical interface (Automated)<br />
         17. Verify VPLS traffic forwarding over physical sub interface (Automated)<br />
         18. Add a bundle member from a different LC to existing bundle (Automated)<br />
-        19. VPLS over ECMP SRTE tunnels (Adding case)<br />
+        19. VPLS over ECMP SRTE tunnels (Automated)<br />
         20. VPLS over SRTE tunnels with ECMP IGP paths (IGP ECMP not supported)<br />
-        21. 64 ECMP tunnel paths (Adding case)<br />
-        22. 64 IGP paths (IGP ECMP not supported)<br />
+        21. 64 ECMP tunnel paths (Automated)<br />
+        22. 64 IGP paths (IGP ECMP not supported for flood traffic)<br />
         23. shutdown AC interface (Automated)<br />
         24. Remove a bundle member link down to zero (Automated)<br />
         25. bring down IGP ECMP paths all the way down to zero and up (Automated)<br />
-        26. bring down tunnel ECMP paths all the way  down to zero and up (Adding case)<br />
+        26. bring down tunnel ECMP paths all the way  down to zero and up (Automated)<br />
         27. RSPFO (Automated)<br />
         28. process restart (ISIS, OSPF, l2vpn_mgr, fib_mgr) (Automated)<br />
         29. switch between startup config and full cofig and vice versa (Automated)<br />

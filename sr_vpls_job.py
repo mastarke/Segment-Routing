@@ -6,7 +6,7 @@ import os
 class SrScriptArgs(object):
     """ Segment routing script aruguments."""
 
-    testbed_file = ('/nobackup/mastarke/my_local_git/'
+    testbed_file = ('/ws/mastarke-sjc/my_local_git/'
                     'segment_routing/sr-vpls.yaml')
     uut_list = ['R6', 'R4', 'R7', 'R2', 'R3']
 
@@ -105,7 +105,7 @@ class SrScriptArgs(object):
 
 def main():
     """Segment routing script run"""
-    run(testscript='/nobackup/mastarke/my_local_git/segment_routing/sr.py',
+    run(testscript='/ws/mastarke-sjc/my_local_git/segment_routing/sr.py',
     uids=Or('common_setup',
             And('Sr_te_path_sr'),
             And('Sr_te_path_dynamic_sr'),
@@ -129,6 +129,7 @@ def main():
             And('Prefered_path'),
             And('Prefered_path_change_tunnel_config'),
             And('Prefered_path_with_flow_label'),
+            And('Sr_flow_label_64_Ecmp'),
             And('L2vpn_control_word'),
             Not('.*'),
             'common_cleanup')

@@ -404,12 +404,15 @@ class Verify(object):
 
         return result
 
-    def ixia_traffic_rx(ixia_result=0, packet_tolerance=5.000, wait_time=60):
+    def ixia_traffic_rx(stream_hld, ixia_result=0, packet_tolerance=5.000,
+                        wait_time=60):
         # GETTING COMMON SETUP INSTANCE ATTRIBUTES
         sr = Common_setup(wait_time)
 
         # RUN IXIA TRAFFIC
-        sr.ixia.traffic_control(action='run', port_handle=sr.port_handle_list)
+        sr.ixia.traffic_control(action='run',
+                                port_handle=sr.port_handle_list,
+                                handle=stream_hld)
         time.sleep(wait_time)
 
         if sr.vpls_flag == True:
@@ -787,9 +790,12 @@ class Common_setup(aetest.CommonSetup):
     # SETTING EXPECTED NUMBER OF ISIS ADJACENCY
     if srv6_flag == True:
         exp_isis_prx = 6
+        pfx = 2
+        adj = str(2)
     else:
         exp_isis_prx = 3
-
+        pfx = 1
+        adj = str(1)
 
     # R1 TO R5 EXPLICIT PATH LIST TO R5 PRIMARY PATH
     r1_r5_exp_path1_lo0 = [r2_lo, r3_lo, r4_lo, r5_lo]
@@ -1889,12 +1895,16 @@ class Common_setup(aetest.CommonSetup):
                                               circuit_endpoint_type='ipv4',
                                               rate_pps=10000,)
                 s2_id = s2.stream_id
+
                 # MCAST TRAFFIC UNKOWN SRC AND DST MAC
                 s3 = self.ixia.traffic_config(mode='create',
                                               traffic_generator='ixnetwork_540',
                                               convert_to_raw='1',
                                               name='r1_mcast_traffic',
                                               ip_src_addr='1.1.1.1',
+                                              ip_src_mode='increment',
+                                              ip_src_count='1000',
+                                              ip_src_step='0.0.0.1',
                                               ip_dst_addr='2.2.2.2',
                                               mac_src='aaaa.aaaa.aaaa',
                                               mac_dst='bbbb.bbbb.bbbb',
@@ -1910,7 +1920,7 @@ class Common_setup(aetest.CommonSetup):
                                               emulation_dst_handle=[self.tgen_port_handle2,
                                                                     self.tgen_port_handle3],
                                               circuit_endpoint_type='ipv4',
-                                              rate_pps=5000,)
+                                              rate_pps=5000)
                 s3_id = s3.stream_id
 
                 # BCAST TRAFFIC DST MAC AS FFFF.FFFF.FFFF
@@ -2102,6 +2112,9 @@ class Common_setup(aetest.CommonSetup):
                                             transmit_mode='single_burst',
                                             pkts_per_burst='100000',
                                             l3_protocol='ipv6',
+                                            ipv6_flow_label='5000',
+                                            ipv6_flow_label_mode='incr',
+                                            ipv6_flow_label_count='50',
                                             track_by='sourceDestEndpointPair0')
 
                 s1_id = s1.stream_id
@@ -2460,9 +2473,9 @@ class Common_setup(aetest.CommonSetup):
                 if result['status'] != '1':
                     self.failed('Ixia BGP emulation failed', goto = ['exit'])
 
-                # START ISIS EMULATION
-                isis_hdl_ixia = [r1_isis_handle, r5_isis_handle]
-                ixia_p_hdl = [self.tgen_port_handle1, self.tgen_port_handle3]
+                # START ISIS
+                isis_hdl_ixia = [r5_isis_handle ,r1_isis_handle]
+                ixia_p_hdl = [self.tgen_port_handle3, self.tgen_port_handle1]
                 result = self.ixia.emulation_isis_control(mode='start',
                                                         handle=isis_hdl_ixia,
                                                         port_handle=ixia_p_hdl)
@@ -2470,7 +2483,8 @@ class Common_setup(aetest.CommonSetup):
                 if result['status'] != '1':
                     self.failed('Ixia ISIS emulation failed', goto = ['exit'])
 
-                time.sleep(10)
+                time.sleep(5)
+
                 # VERIFY ISIS EMULATION IS UP
                 for rtr in [self.r1, self.r5]:
                     if rtr == self.r1:
@@ -2618,7 +2632,7 @@ class SanityTraffic(aetest.Testcase):
         """Testcase execution to verify basic traffic."""
         sr = Common_setup()
         # START TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         # CLEAR COUNTERS
         Clear.counters(sr.uut_list)
@@ -2629,7 +2643,7 @@ class SanityTraffic(aetest.Testcase):
         sr = Common_setup()
 
         # START TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         output = sr.r1.execute('show controllers np counters all | i SR')
         mo = re.search(r'SRH_PASS2 +(\d+)', output)
@@ -2781,9 +2795,9 @@ class SrFeatureInteraction(aetest.Testcase):
         mo = re.search(r'(\d+) hw +matches', output)
 
         if int(mo.group(1)) >= 395000:
-            log.info('Pass ACL HW entreis matched {} expected 200000'.format(mo.group(1)))
+            log.info('Pass ACL HW entreis matched {} expected 400000'.format(mo.group(1)))
         else:
-            self.failed('Fail ACL HW entreis matched {} expected 200000'.format(mo.group(1)))
+            self.failed('Fail ACL HW entreis matched {} expected 400000'.format(mo.group(1)))
 
         # UNCONFIG ACL
         sr.r1.configure("""interface {}
@@ -2802,7 +2816,7 @@ class SrFeatureInteraction(aetest.Testcase):
         sr = Common_setup()
 
         # SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.failed('traffic failed')
@@ -2811,24 +2825,28 @@ class SrFeatureInteraction(aetest.Testcase):
                            '-cmd show flow monitor fmm cache location {} '
                            '-os_type xr '.format(sr.r1.handle, uut_lc))
 
+        num_flows = klist.cache.flows
+
         i = 1
-        while i <= 2:
+        while i <= int(num_flows):
             flow = 'flow{}'.format(i)
             log.info('searching flow {}'.format(flow))
-            if klist[flow].srcadd == '100::1' and klist[flow].dstadd == '192:168:1::1':
-                log.info('Pass found srv6 traffic stream src {} dst {}'.format(
-                                                                    klist[flow].srcadd,
-                                                                   klist[flow].dstadd))
+            if (klist[flow].srcadd == '100::1' and klist[flow].dstadd == '192:168:1::1'
+                and klist[flow].flow_label == '5000'):
+                log.info('Pass found srv6 traffic stream src {} dst {} '
+                         'flow label {}'.format(klist[flow].srcadd,
+                                                klist[flow].dstadd,
+                                                klist[flow].flow_label))
                 break
-            elif i == 2:
-                self.failed('Fail cound not find srv6 traffic stream src {} dst {}'.format(
-                                                                   klist[flow].srcadd,
-                                                                   klist[flow].dstadd))
+            elif i == int(num_flows):
+                self.failed('Fail cound not find srv6 traffic stream src {} '
+                            'dst {} flow label {}'.format(klist[flow].srcadd,
+                                                          klist[flow].dstadd,
+                                                          klist[flow].flow_label))
             else:
                 log.info('searching for srv6 traffic stream attempt {}'.format(i))
 
             i += 1
-
         # CLEAR COUNTERS
         Clear.counters(sr.uut_list)
 
@@ -2844,7 +2862,7 @@ class SrFeatureInteraction(aetest.Testcase):
                         '''.format(tclstr(sr.r1_tgen_intfs)))
 
         # SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.failed('traffic failed')
@@ -2957,7 +2975,7 @@ class Sr_te_path_sr(aetest.Testcase):
 
         # 3. SEND TRAFFIC
 
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.failed('traffic failed')
@@ -3010,7 +3028,7 @@ class Sr_te_path_dynamic_sr(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3065,7 +3083,7 @@ class Sr_te_path_exp_node_sid(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3119,7 +3137,7 @@ class Sr_te_path_exp_adj_sid_via_main_intf(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3174,7 +3192,7 @@ class Sr_te_path_exp_adj_sid_via_sub_intf(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3228,7 +3246,7 @@ class Sr_te_path_exp_adj_sid_via_bundle_intf(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3300,7 +3318,7 @@ class Rsp_failover_fail_back(aetest.Testcase):
                                    '-data_check 0'.format(sr.r1.handle))
 
             # 3. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -3376,7 +3394,7 @@ class Process_restarts_rsp(aetest.Testcase):
                         '''.format(process[self.p_index]))
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3450,7 +3468,7 @@ class Process_restarts_lc(aetest.Testcase):
                         '''.format(process))
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3542,7 +3560,7 @@ class Lc_reload(aetest.Testcase):
                 self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3621,7 +3639,7 @@ class Interface_flap_tunnel(aetest.Testcase):
             self.failed('tunnel fwd was not as expected')
 
         # 3. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3715,7 +3733,7 @@ class Remove_add_config_loopback(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -3792,7 +3810,7 @@ class Remove_add_config_l2vpn(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3868,7 +3886,7 @@ class Remove_add_config_igp(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -3941,14 +3959,7 @@ class Interface_flap_main_interface(aetest.Testcase):
         """Testcase execution."""
         sr = Common_setup()
         # VERIFY IGP HAS 1 ADJ / NEIGHBOR
-        if sr.srv6_flag == True:
-            pfx = 2
-            adj = str(2)
-        else:
-            pfx = 1
-            adj = str(1)
-
-        isis_result = Verify.routing_protocol(sr.r1, pfx,
+        isis_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                               protocol=proto)
 
         if isis_result != 0:
@@ -3960,7 +3971,7 @@ class Interface_flap_main_interface(aetest.Testcase):
                            '-cmd show isis adjacency '
                            '-os_type xr '.format(sr.r1.handle))
 
-        igp_intf = klist.adjacencies[adj].intf
+        igp_intf = klist.adjacencies[sr.adj].intf
 
         if sr.te_flag == True:
             i = 0
@@ -3997,7 +4008,7 @@ class Interface_flap_main_interface(aetest.Testcase):
             time.sleep(5)
 
             # VERIFY IGP IS UP AFTER INTERFACE FLAP
-            isis_result = Verify.routing_protocol(sr.r1, pfx,
+            isis_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                                   protocol=proto)
             if isis_result != 0:
                 self.debug = 1
@@ -4016,7 +4027,7 @@ class Interface_flap_main_interface(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4056,12 +4067,6 @@ class Interface_flap_bundle(aetest.Testcase):
     def test(self):
         """Testcase execution."""
         sr = Common_setup()
-        if sr.srv6_flag == True:
-            pfx = 2
-            adj = str(2)
-        else:
-            pfx = 1
-            adj = str(1)
 
         # UNSHUT BUNDLE
         sr.r1.configure('''interface {}
@@ -4071,7 +4076,7 @@ class Interface_flap_bundle(aetest.Testcase):
         sr.r1.configure('''interface {} shutdown'''.format(sr.r1_all_intfs[0]))
 
         # VERIFY IGP HAS 1 ADJ / NEIGHBOR
-        igp_result = Verify.routing_protocol(sr.r1, pfx,
+        igp_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                              protocol=proto)
         if igp_result != 0:
             self.debug = 1
@@ -4094,7 +4099,7 @@ class Interface_flap_bundle(aetest.Testcase):
                                '-cmd show isis adjacency '
                                '-os_type xr '.format(sr.r1.handle))
 
-            igp_intf = klist.adjacencies[adj].intf
+            igp_intf = klist.adjacencies[sr.adj].intf
 
         if sr.te_flag == True:
             i = 0
@@ -4130,7 +4135,7 @@ class Interface_flap_bundle(aetest.Testcase):
             time.sleep(5)
 
             # verify igp is up after interface flap
-            isis_result = Verify.routing_protocol(sr.r1, pfx,
+            isis_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                                   protocol=proto)
             if isis_result != 0:
                 self.debug = 1
@@ -4149,7 +4154,7 @@ class Interface_flap_bundle(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4189,12 +4194,6 @@ class Interface_flap_bundle_members(aetest.Testcase):
     def test(self):
         """Testcase execution."""
         sr = Common_setup()
-        if sr.srv6_flag == True:
-            pfx = 2
-            adj = str(2)
-        else:
-            pfx = 1
-            adj = str(1)
         # SHUTING DOWN BUNDLE MEMBERS
         i = 1
         for intfs in sr.r1_r2_intfs[1:3]:
@@ -4213,7 +4212,7 @@ class Interface_flap_bundle_members(aetest.Testcase):
                 Clear.counters(sr.uut_list)
 
                 # 2. SEND TRAFFIC
-                ixia_result = Verify.ixia_traffic_rx()
+                ixia_result = Verify.ixia_traffic_rx(stream_list)
 
                 if ixia_result == 1:
                     self.debug = 1
@@ -4242,7 +4241,7 @@ class Interface_flap_bundle_members(aetest.Testcase):
             if i == 1:
 
                 # CHECK IF IGP IS UP
-                isis_result = Verify.routing_protocol(sr.r1, pfx,
+                isis_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                                       protocol=proto)
                 if isis_result != 0:
                     self.debug = 1
@@ -4268,7 +4267,7 @@ class Interface_flap_bundle_members(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4308,12 +4307,6 @@ class Bundle_add_remove_members(aetest.Testcase):
     def test(self):
         """Testcase execution."""
         sr = Common_setup()
-        if sr.srv6_flag == True:
-            pfx = 2
-            adj = str(2)
-        else:
-            pfx = 1
-            adj = str(1)
         # REMOVING BUNDLE MEMBERS
         i = 1
         for intfs in sr.r1_r2_intfs[1:3]:
@@ -4333,7 +4326,7 @@ class Bundle_add_remove_members(aetest.Testcase):
                 Clear.counters(sr.uut_list)
 
                 # 2. SEND TRAFFIC
-                ixia_result = Verify.ixia_traffic_rx()
+                ixia_result = Verify.ixia_traffic_rx(stream_list)
 
                 if ixia_result == 1:
                     self.debug = 1
@@ -4364,7 +4357,7 @@ class Bundle_add_remove_members(aetest.Testcase):
             if i == 1:
 
                 # CHECK IF IGP IS UP
-                isis_result = Verify.routing_protocol(sr.r1, pfx,
+                isis_result = Verify.routing_protocol(sr.r1, sr.pfx,
                                                       protocol=proto)
                 if isis_result != 0:
                     self.debug = 1
@@ -4390,7 +4383,7 @@ class Bundle_add_remove_members(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4461,7 +4454,7 @@ class Ti_lfa_path_switch(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4502,7 +4495,7 @@ class Ti_lfa_path_switch(aetest.Testcase):
             Clear.counters(sr.uut_list)
 
             # 2. SEND TRAFFIC
-            ixia_result = Verify.ixia_traffic_rx()
+            ixia_result = Verify.ixia_traffic_rx(stream_list)
 
             if ixia_result == 1:
                 self.debug = 1
@@ -4527,6 +4520,103 @@ class Ti_lfa_path_switch(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+class Sr_Ecmp(aetest.Testcase):
+    """Verify SR ECMP."""
+
+    debug = 0
+
+    @aetest.setup
+    def setup(self):
+        """Testcase setup."""
+        sr = Common_setup()
+
+        # ENABLE FLOW LABEL CONFIG
+        if sr.srv6_flag == True:
+            isis_expected_adj = 4
+            sr.r1.configure('cef load-balancing fields ipv6 flow-label')
+
+            # BRING UP ALL THE PHYSICAL PATHS
+            for intfs in sr.rtr1_rtr2_cfg_intf_list:
+
+                print(sr.r1.configure('''interface {}
+                                         no shutdown'''.format(intfs)))
+
+            for intfs in sr.r1_r2_intfs:
+
+                print(sr.r1.configure('''interface {}
+                                         no shutdown'''.format(intfs)))
+
+        # VERIFY ALL IGP PATHS ARE UP
+        igp_result = Verify.routing_protocol(sr.r1, isis_expected_adj,
+                                              protocol=proto)
+
+        if igp_result == 1:
+            self.failed('did not find expected isis adj')
+
+    @aetest.test
+    def test(self):
+        """Testcase execution."""
+        sr = Common_setup()
+
+        if sr.srv6_flag == True:
+            # CREATE LIST OF ECMP IGP INTERFACES
+            ecmp_intf = []
+            for i in range(len(sr.rtr1_rtr2_cfg_intf_list)):
+                ecmp_intf.append(sr.rtr1_rtr2_cfg_intf_list[i])
+
+            ecmp_intf.append(sr.r1_r2_intfs[0])
+
+        # CREATE LIST OF ECMP TRAFFIC STREAMS
+        ecmp_traffic_stream = []
+        ecmp_traffic_stream.append(stream_list[0])
+
+        # 1. CLEAR COUNTERS
+        Clear.counters(sr.uut_list)
+
+        #2. SEND TRAFFIC
+        ixia_result = Verify.ixia_traffic_rx(ixia_result=0,
+                                             packet_tolerance=5.000,
+                                             wait_time=60,
+                                             stream_hld=ecmp_traffic_stream)
+
+        if ixia_result == 1:
+            self.debug = 1
+            self.failed('traffic failed')
+
+        #3. STOP TRAFFIC STREAM
+        sr.ixia.traffic_control(action='stop', handle=ecmp_traffic_stream)
+
+
+        # VERIFY ECMP TRAFFIC ON LINK
+        pkt_count_list = []
+        for intfs in ecmp_intf:
+            klist = tcl.q.eval('router_show -device {} '
+                               '-cmd show interface {} accounting '
+                               '-os_type xr '.format(sr.r1.handle, intfs))
+
+            pkts_out_intf = klist.totals.pkts_out
+
+            # ENSURE NOT TO MUCH TRAFFIC WHEN OVER SINGLE LINK
+            log.info('interface {} pkts out = {}'.format(intfs,pkts_out_intf))
+            if int(pkts_out_intf) >= 40000:
+                self.failed('Fail, To much traffic on single link {}'.format(intfs))
+
+            # ADD PKTS TO LIST
+            pkt_count_list.append(int(pkts_out_intf))
+
+        # GET TOTAL OF PKT COUNT
+        total_pkts = sum(pkt_count_list)
+
+        if total_pkts < 95000:
+            self.failed('Fail, Not all ECMP traffic was accounted. '
+                   'Expected 100000 got {}'.format(total_pkts))
+
+
+    @aetest.cleanup
+    def cleanup(self):
+        """Testcase cleanup."""
+        sr = Common_setup()
+
 
 class Prefered_path(aetest.Testcase):
     """Verify SR with prefered path config."""
@@ -4538,7 +4628,7 @@ class Prefered_path(aetest.Testcase):
     def setup(self):
         """Testcase setup."""
         sr = Common_setup()
-        # bring up all the physical paths
+        # BRING UP ALL THE PHYSICAL PATHS
         for intfs in sr.rtr1_rtr2_cfg_intf_list:
 
             print(sr.r1.configure('''interface {}
@@ -4549,7 +4639,7 @@ class Prefered_path(aetest.Testcase):
             print(sr.r1.configure('''interface {}
                                      no shutdown'''.format(intfs)))
 
-        # add autoroute announce to all tunnels
+        # ADD AUTOROUTE ANNOUNCE TO ALL TUNNELS
         for r1_r5_tun, r1_r4_tun in itertools.zip_longest(sr.r1_r5_tunnel_list,
                                                           sr.r1_r4_tunnel_list):
             sr.r1.configure('''interface {}
@@ -4615,7 +4705,7 @@ class Prefered_path(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -4692,7 +4782,7 @@ class Prefered_path_change_tunnel_config(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
@@ -4777,7 +4867,8 @@ class Prefered_path_with_flow_label(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
+
 
         if ixia_result == 1:
             self.debug = 1
@@ -4790,6 +4881,169 @@ class Prefered_path_with_flow_label(aetest.Testcase):
         if result == 1:
             self.debug = 1
             self.failed('interface traffic accounting failed')
+
+    @aetest.cleanup
+    def cleanup(self):
+        """Testcase cleanup."""
+        sr = Common_setup()
+
+        # COLLECT DEBUG LOGS
+        if self.debug == 1:
+            Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+
+class Sr_flow_label_64_Ecmp(aetest.Testcase):
+    """Verify SR traffic using flow label.
+    Test that MCAST VPLS traffic is going over 64 ECMP tunnels.
+    """
+
+    debug = 0
+
+    @aetest.setup
+    def setup(self):
+        """Testcase setup."""
+        sr = Common_setup()
+
+        # REMOVE PREFERED PATH
+        for i in range(1,3):
+            sr.r1.configure('''l2vpn
+                                pw-class my_pref_path_{}
+                                encapsulation mpls
+                                no preferred-path
+                                '''.format(str(i)))
+
+        # BRING UP 64 TE TUNNELS
+        if sr.vpls_flag == True:
+            isis_expected_adj = 3
+            # REMOVE AUTOROUTE ANNOUNCE FOR NON ECMP TUNNELS
+            for i in range(2):
+                if i == 0:
+                    tun_range = '141-146'
+                    tun_range64 = '1-64'
+                    tun_dst = sr.r4_lo
+
+                    # ENABLE ISIS FOR 64 ECMP PATHS
+                    sr.r1.configure('''router isis 1
+                                       address-family ipv4 unicast
+                                       maximum-paths 64''')
+
+                else:
+                    tun_range = '151-156'
+                    tun_range64 = '65-128'
+                    tun_dst = sr.r5_lo
+
+                # REMOVE AA FROM TUNNELS TO ENDPOINT R5 AND R4
+                sr.r1.configure('''interface tunnel-te {}
+                                   no autoroute announce'''.format(tun_range))
+
+                # CONFIG 64 ECMP TUNNELS TO R5 AND R4 ENDPOINTS
+                sr.r1.configure('''interface tunnel-te {}
+                                   ipv4 unnumbered Loopback0
+                                   autoroute announce
+                                   destination {}
+                                   path-option 1 dynamic segment-routing
+                                   '''.format(tun_range64, tun_dst))
+
+
+            for endpoints in [sr.r5_lo, sr.r4_lo]:
+                log.info(banner('Checking CEF has 64 entries to '
+                                'tunnel dst endpoint {}'.format(endpoints)))
+
+                for i in range(5):
+                    # CHECK CEF HAS 64 ENTRIES TO DESTINATION
+                    klist = tcl.q.eval('router_show -device {} '
+                                       '-cmd show cef {} '
+                                       '-os_type xr '.format(sr.r1.handle,
+                                                             endpoints))
+
+                    num_of_next_hops = klist.next_hop_count
+
+                    if int(num_of_next_hops) == 64:
+                        log.info('Pass found 64 tunnel ECMP '
+                                 'entries in cef to endpoint {}'.format(endpoints))
+                        break
+                    elif i == 4:
+                        self.failed('Fail found 64 tunnel ECMP '
+                                 'entries in cef to endpoint {}'.format(endpoints))
+                    else:
+                        log.info('polling for 64 tunnel entries in cef.')
+                        time.sleep(10)
+
+
+    @aetest.test
+    def test(self):
+        """Testcase execution."""
+        sr = Common_setup()
+
+        # 1. CLEAR COUNTERS
+        Clear.counters(sr.uut_list)
+
+        # 2. SEND TRAFFIC MCAST TRAFFIC (ECMP ONLY ON TUNNELS
+        # NOT SUPPORTED ON IGP LINK FOR MCAST)
+        ixia_result = Verify.ixia_traffic_rx(stream_list[2])
+
+        #2A. STOP TRAFFIC STREAM
+        sr.ixia.traffic_control(action='stop', handle=stream_list[2])
+
+        if ixia_result == 1:
+            self.debug = 1
+            self.failed('traffic failed')
+
+        #3. VERIFY ECMP TRAFFIC ON LINK
+        for attempts in range(1,3):
+            if attempts == 1:
+                start_num = 1
+                end_num = 65
+                endpoint = sr.r5_lo
+            if attempts == 2:
+                start_num = 65
+                end_num = 129
+                endpoint = sr.r4_lo
+            pkt_count_list = []
+            log.info(banner('Checking 64 ecmp to '
+                            'tunnel endpoint {}'.format(endpoint)))
+            for intfs in range(start_num,end_num):
+                klist = tcl.q.eval('router_show -device {} '
+                                   '-cmd show interface tunnel-te{} accounting '
+                                   '-os_type xr '.format(sr.r1.handle, intfs))
+
+                pkts_out_intf = klist.totals.pkts_out
+
+                # ENSURE NOT TO MUCH TRAFFIC WHEN OVER SINGLE LINK
+                log.info('interface tunnel-te{} '
+                         'pkts out = {}'.format(intfs, pkts_out_intf))
+                if int(pkts_out_intf) >= 3000:
+                    self.failed('Fail, To much traffic on '
+                                'single link {}'.format(intfs))
+
+                # ADD PKTS TO LIST
+                pkt_count_list.append(int(pkts_out_intf))
+
+            # GET TOTAL OF PKT COUNT
+            total_pkts = sum(pkt_count_list)
+
+            if total_pkts >= 95000:
+                log.info('Pass for 64 ecmp tunnels to end point {} '
+                      'pkts sent is {}'.format(endpoint, total_pkts))
+            else:
+                self.failed('Fail for 64 ecmp tunnels to end point {} '
+                      'pkts sent is {}'.format(endpoint, total_pkts))
+
+        # REMOVE TUNNELS FOR 64 ECMP
+        sr.r1.configure('''no interface tunnel-te 1-128''')
+
+        # VERIFY TUNNELS ARE REMOVED
+        klist = tcl.q.eval('router_show -device {} '
+                           '-cmd show mpls traffic-eng tunnels brief '
+                           '-os_type xr '.format(sr.r1.handle, intfs))
+
+        output = klist.total_heads_count
+
+        if int(output) >= 13:
+            self.failed('Fail 64 ecmp tunnels were not successfully removed')
+        else:
+            log.info('Pass successfully removed 64 ecmp tunnels')
+
 
     @aetest.cleanup
     def cleanup(self):
@@ -4910,7 +5164,7 @@ class L2vpn_control_word(aetest.Testcase):
         Clear.counters(sr.uut_list)
 
         # 2. SEND TRAFFIC
-        ixia_result = Verify.ixia_traffic_rx()
+        ixia_result = Verify.ixia_traffic_rx(stream_list)
 
         if ixia_result == 1:
             self.debug = 1
