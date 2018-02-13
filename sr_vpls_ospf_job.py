@@ -6,7 +6,7 @@ import os
 class SrScriptArgs(object):
     """ Segment routing script aruguments."""
 
-    testbed_file = '/nobackup/mastarke/my_local_git/segment_routing/sr-vpls.yaml'
+    testbed_file = '/ws/mastarke-sjc/my_local_git/segment_routing/sr-vpls.yaml'
 
     uut_list = ['R3', 'R2', 'R1', 'R4', 'R6']
 
@@ -78,17 +78,44 @@ class SrScriptArgs(object):
 
     # SCRIPT ARGUMENTS
     startup_config = 'harddisk:startup-config'
-    routing_proto = 'isis'
+    routing_proto = 'ospf'
+
+    # FLAGS
+    vpls_flag = True
+    te_flag = True
 
     rsp_process_list = ['fib_mgr', 'mpls_io_ea', 'ifmgr', 'bfd']
-
     lc_process_list = ['fib_mgr', 'ifmgr', 'mpls_io_ea',
                        'bfd_agent']
 
 def main():
     """Segment routing script run"""
-    run(testscript='/nobackup/mastarke/my_local_git/segment_routing/sr.py',
-        # uids=Or('common_setup',
-        #      Not('Rsp_failover_fail_back'),
-        #          'common_cleanup')
+    run(testscript='/ws/mastarke-sjc/my_local_git/segment_routing/sr.py',
+    uids=Or('common_setup',
+            And('Sr_te_path_sr'),
+            And('Sr_te_path_dynamic_sr'),
+            And('Sr_te_path_exp_node_sid'),
+            And('Sr_te_path_exp_adj_sid_via_main_intf'),
+            And('Sr_te_path_exp_adj_sid_via_sub_intf'),
+            And('Sr_te_path_exp_adj_sid_via_bundle_intf'),
+            And('Rsp_failover_fail_back'),
+            And('Process_restarts_rsp'),
+            And('Process_restarts_lc'),
+            And('Lc_reload'),
+            And('Interface_flap_tunnel'),
+            And('Remove_add_config_loopback'),
+            And('Remove_add_config_l2vpn'),
+            And('Remove_add_config_igp'),
+            And('Interface_flap_main_interface'),
+            And('Interface_flap_bundle'),
+            And('Interface_flap_bundle_members'),
+            And('Bundle_add_remove_members'),
+            And('Ti_lfa_path_switch'),
+            And('Prefered_path'),
+            And('Prefered_path_change_tunnel_config'),
+            And('Prefered_path_with_flow_label'),
+            And('Sr_flow_label_64_Ecmp'),
+            And('L2vpn_control_word'),
+            Not('.*'),
+            'common_cleanup')
         )

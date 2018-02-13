@@ -24,6 +24,11 @@ jobfile = runtime.job.name  # GET JOB FILE NAME
 a = importlib.import_module(jobfile)  # IMPORT THE JOB FILE INTO NAMESPACE
 SrScriptArgs = a.SrScriptArgs()  # INSTANCE OF SRSCRIPTARGS
 
+# IMPORT NEST PROC
+sys.path.append('/auto/nest/pynest')
+from nest_data import NestData
+rid = NestData.log()
+
 tcl.q.source('/auto/sjgate/autotest/regression/viking/gate/scripts/libInit')
 
 log = logging.getLogger(__name__)
@@ -2549,6 +2554,8 @@ class Common_setup(aetest.CommonSetup):
                           '-return node_id '.format(self.r1.handle,
                                                     self.r1_tgen_intfs[0]))
 
+
+
 #######################################################################
 #                          TESTCASE BLOCK                             #
 #######################################################################
@@ -2623,6 +2630,7 @@ class SanityTraffic(aetest.Testcase):
     def verify_fib_show_cef(self):
         """Testcase execution to verify FIB."""
         sr = Common_setup()
+        
         result = Verify.srv6_show_cef_pd_check(rtr=sr.r1, lc=uut_lc)
         if result == 1:
             self.failed('SRv6 PD check failed')
@@ -2632,7 +2640,11 @@ class SanityTraffic(aetest.Testcase):
         """Testcase execution to verify basic traffic."""
         sr = Common_setup()
         # START TRAFFIC
+
         ixia_result = Verify.ixia_traffic_rx(stream_list)
+
+        if ixia_result == 1:
+            self.failed('traffic failed')
 
         # CLEAR COUNTERS
         Clear.counters(sr.uut_list)
@@ -2644,6 +2656,9 @@ class SanityTraffic(aetest.Testcase):
 
         # START TRAFFIC
         ixia_result = Verify.ixia_traffic_rx(stream_list)
+
+        if ixia_result == 1:
+            self.failed('traffic failed')
 
         output = sr.r1.execute('show controllers np counters all | i SR')
         mo = re.search(r'SRH_PASS2 +(\d+)', output)
@@ -2932,6 +2947,7 @@ class Sr_te_path_sr(aetest.Testcase):
         """Testcase setup."""
         sr = Common_setup()
         # GET LINECARD LOCATION
+
 
         r1_r5_int = [tclstr(sr.rtr1_rtr5_cfg_intf_list), sr.r1_r5_intfs[0]]
 
@@ -3348,6 +3364,8 @@ class Rsp_failover_fail_back(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
+
 
 class Process_restarts_rsp(aetest.Testcase):
     """Verify SR after restarting the RSP process."""
@@ -3418,6 +3436,8 @@ class Process_restarts_rsp(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Process_restarts_lc(aetest.Testcase):
@@ -3493,6 +3513,8 @@ class Process_restarts_lc(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Lc_reload(aetest.Testcase):
@@ -3584,6 +3606,8 @@ class Lc_reload(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
+
 
 class Interface_flap_tunnel(aetest.Testcase):
     """Verify SR while flapping the SR tuneles."""
@@ -3661,6 +3685,8 @@ class Interface_flap_tunnel(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Remove_add_config_loopback(aetest.Testcase):
@@ -3757,6 +3783,8 @@ class Remove_add_config_loopback(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
+
 
 class Remove_add_config_l2vpn(aetest.Testcase):
     """Verify SR while adding and remving L2VPN config."""
@@ -3832,6 +3860,8 @@ class Remove_add_config_l2vpn(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Remove_add_config_igp(aetest.Testcase):
@@ -3909,6 +3939,8 @@ class Remove_add_config_igp(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Interface_flap_main_interface(aetest.Testcase):
@@ -4053,6 +4085,8 @@ class Interface_flap_main_interface(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
+
 
 class Interface_flap_bundle(aetest.Testcase):
     """Verify SR and flap the logical bundle interface."""
@@ -4180,6 +4214,8 @@ class Interface_flap_bundle(aetest.Testcase):
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
 
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
+
 
 class Interface_flap_bundle_members(aetest.Testcase):
     """Verify SR over bundle, and flap bundle interface members."""
@@ -4292,6 +4328,8 @@ class Interface_flap_bundle_members(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Bundle_add_remove_members(aetest.Testcase):
@@ -4408,6 +4446,8 @@ class Bundle_add_remove_members(aetest.Testcase):
         # COLLECT DEBUG LOGS
         if self.debug == 1:
             Debug.router(sr.r1, uut_lc, [sr.r4_lo, sr.r5_lo])
+
+        NestData.livesync(sr.r1, self.uid, self.result, rid)
 
 
 class Ti_lfa_path_switch(aetest.Testcase):
